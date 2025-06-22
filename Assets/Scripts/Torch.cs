@@ -20,6 +20,6 @@ public class Torch : MonoBehaviour
     void UpdateVisual()
     {
         if (rend != null)
-            rend.sharedMaterial.color = isLit ? Color.yellow : Color.gray;
+            rend.material.color = isLit ? Color.yellow : Color.gray;
     }
 }
