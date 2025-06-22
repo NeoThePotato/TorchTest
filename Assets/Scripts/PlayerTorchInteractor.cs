@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,9 +16,9 @@ public class PlayerTorchInteractor : MonoBehaviour
             return;
         var colliders = Pool.Rent(DEFAULT_ARRAY_SIZE);
         Physics.OverlapSphereNonAlloc(transform.position, interactionRange, colliders);
-        foreach (var hit in colliders)
+        foreach (var collider in colliders.TakeWhile(c => c))
         {
-			if (hit.TryGetComponent<Torch>(out var torch) && !torch.isLit)
+			if (collider.TryGetComponent<Torch>(out var torch) && !torch.isLit)
 				torch.LightUp();
         }
 		Pool.Return(colliders);
