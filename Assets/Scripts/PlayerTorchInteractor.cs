@@ -1,20 +1,25 @@
+using System.Buffers;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerTorchInteractor : MonoBehaviour
 {
-    public float interactionRange = 2f;
+	private const int DEFAULT_ARRAY_SIZE = 64;
+	private static ArrayPool<Collider> Pool => ArrayPool<Collider>.Shared;
+
+	public float interactionRange = 2f;
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (!Keyboard.current.eKey.wasPressedThisFrame)
+            return;
+        var colliders = Pool.Rent(DEFAULT_ARRAY_SIZE);
+        Physics.OverlapSphereNonAlloc(transform.position, interactionRange, colliders);
+        foreach (var hit in colliders)
         {
-            Collider[] hits = Physics.OverlapSphere(transform.position, interactionRange);
-            foreach (var hit in hits)
-            {
-                var torch = hit.GetComponent<Torch>();
-                if (torch != null && !torch.isLit)
-                    torch.LightUp();
-            }
+			if (hit.TryGetComponent<Torch>(out var torch) && !torch.isLit)
+				torch.LightUp();
         }
+		Pool.Return(colliders);
     }
 }
