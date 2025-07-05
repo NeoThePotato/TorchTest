@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class Torch : MonoBehaviour
 {
+    public static readonly Color LIT_COLOR = Color.yellow, UNLIT_COLOR = Color.gray;
+
     public bool isLit = false;
     public Renderer rend;
 
@@ -19,7 +21,7 @@ public class Torch : MonoBehaviour
 
     void UpdateVisual()
     {
-        if (rend != null)
-            rend.material.color = isLit ? Color.yellow : Color.gray;
+        if (rend)
+            rend.material.color = isLit ? LIT_COLOR : UNLIT_COLOR;
     }
 }
