@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,17 +9,21 @@ public class PlayerTorchInteractor : MonoBehaviour
 
 	public float interactionRange = 2f;
 
-    void Update()
-    {
-        if (!Keyboard.current.eKey.wasPressedThisFrame)
-            return;
-        var colliders = Pool.Rent(DEFAULT_ARRAY_SIZE);
-        Physics.OverlapSphereNonAlloc(transform.position, interactionRange, colliders);
-        foreach (var collider in colliders.TakeWhile(c => c))
-        {
-			if (collider.TryGetComponent<Torch>(out var torch) && !torch.isLit)
+	void Update()
+	{
+		if (Keyboard.current.eKey.wasPressedThisFrame)
+			Interact();
+	}
+
+	public void Interact()
+	{
+		var colliders = Pool.Rent(DEFAULT_ARRAY_SIZE);
+		Physics.OverlapSphereNonAlloc(transform.position, interactionRange, colliders);
+		foreach (var collider in colliders)
+		{
+			if (collider && collider.TryGetComponent<Torch>(out var torch) && !torch.isLit)
 				torch.LightUp();
-        }
+		}
 		Pool.Return(colliders);
-    }
+	}
 }
