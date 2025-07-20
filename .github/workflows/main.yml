@@ -82,34 +82,54 @@ jobs:
 
   # Job to deploy the build to GitHub Releases
   deployToGitHubReleases:
-    name: Deploy to GitHub Releases
+    name: Run Playmode Tests
     runs-on: ubuntu-latest
-    needs: buildWindows # This job depends on the buildWindows job completing successfully
-    if: startsWith(github.ref, 'refs/tags/') # Only run this job when a tag is pushed
 
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
-          name: Build-StandaloneWindows64
-          path: ./build/StandaloneWindows64 # Path where the artifact will be downloaded
+          fetch-depth: 0
+          lfs: true
 
-      - name: Archive Build Folder
-        run: tar -czvf build/StandaloneWindows64.tar.gz -C build/ StandaloneWindows64
-        # This command creates a gzipped tar archive of the StandaloneWindows64 folder.
-        # -C build/ changes the directory to 'build/' before archiving,
-        # ensuring 'StandaloneWindows64' is at the root of the archive.
-        # The archive will be named 'StandaloneWindows64.tar.gz' and placed in the 'build/' directory.
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1 # Action to create a GitHub Release
+      - name: Cache Library folder
+        uses: actions/cache@v3
         with:
-          files: build/StandaloneWindows64.tar.gz # Now uploading a single compressed archive
-          name: Release ${{ github.ref_name }} # Name of the release (e.g., "Release v1.0.0")
-          body: | # Description for the release
-            New release based on tag ${{ github.ref_name }}.
-            This release includes the StandaloneWindows64 build, compressed for easier download.
-          draft: false # Set to true to create a draft release
-          prerelease: false # Set to true for a pre-release
+          path: Library
+          key: Library-PlaymodeTests-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-PlaymodeTests-
+            Library-
+
+      - name: Run Unity Playmode Tests
+        uses: game-ci/unity-test-runner@v4
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub's built-in token for authentication
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          testMode: PlayMode
+          # The path where test results will be generated
+          artifactsPath: artifacts/TestResults/Playmode
+
+      - name: Upload Playmode Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Playmode-Test-Results
+          path: artifacts/TestResults/Playmode
+
+  # Job to upload release to Google Drive
+  uploadToGoogleDrive:
+    name: Upload to Google Drive
+    runs-on: ubuntu-latest
+    needs: buildWindows # This job depends on the buildWindows job completing successfully
+
+    steps:
+    - uses: actions/checkout@v4.1.1
+
+    - name: Upload Artifacts TO Google Drive
+      uses: Jumbo810/Upload_Github_Artifacts_TO_GDrive@v2.3.1
+      with:
+        target: build/StandaloneWindows64/Build-StandaloneWindows64
+        credentials: ${{ secrets.GOOGLE_CREDENTIALS }}
+        parent_folder_id: ${{ vars.GOOGLE_DRIVE_FOLDER_ID }}
