@@ -109,10 +109,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4.1.1
-
-    - name: Upload Artifacts TO Google Drive
+    - name: Download Build Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: Build-StandaloneWindows64
+        path: ./build/StandaloneWindows64 # Path where the artifact will be downloaded
+    - name: Compress to 7z archive
+      uses: edgarrc/action-7z@v1
+      with:
+        args: 7z -t7z -mx=7 StandaloneWindows64.7z StandaloneWindows64
+    - name: Upload Artifacts To Google Drive
       uses: Jumbo810/Upload_Github_Artifacts_TO_GDrive@v2.3.1
       with:
-        target: Build-StandaloneWindows64.zip
+        target: Build-StandaloneWindows64.7z
         credentials: ${{ secrets.GOOGLE_CREDENTIALS }}
         parent_folder_id: ${{ vars.GOOGLE_DRIVE_FOLDER_ID }}
+        override: true
+        owner: ${{ secrets.UNITY_EMAIL }}
+        replace_mode: update_in_place
