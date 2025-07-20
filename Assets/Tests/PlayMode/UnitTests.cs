@@ -8,16 +8,22 @@ public class UnitTests
 	private static readonly Shader TORCH_SHADER = Shader.Find("Universal Render Pipeline/Lit");
 	private static readonly System.Type[] REQUIRED_COMPONENTS = { typeof(Torch), typeof(MeshRenderer) };
 
+	public static Torch CreateTorch()
+	{
+		var go = new GameObject("Test Torch", REQUIRED_COMPONENTS);
+		var torch = go.GetComponent<Torch>();
+		torch.rend = go.GetComponent<MeshRenderer>();
+		torch.rend.material = new(TORCH_SHADER);
+		return torch;
+	}
+
 	private Torch _torch;
 
 	[UnitySetUp]
 	public IEnumerator SetUp()
 	{
 		yield return null;
-		var go = new GameObject("Test Torch", REQUIRED_COMPONENTS);
-		_torch = go.GetComponent<Torch>();
-		_torch.rend = go.GetComponent<MeshRenderer>();
-		_torch.rend.material = new(TORCH_SHADER);
+		_torch = CreateTorch();
 	}
 
 	[UnityTearDown]
